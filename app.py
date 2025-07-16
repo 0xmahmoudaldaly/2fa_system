@@ -2,6 +2,8 @@ from flask import Flask, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import json
 import os
+import pyotp
+import qrcode
 
 app = Flask(__name__)
 app.secret_key = 'secret-key'
@@ -9,8 +11,14 @@ app.secret_key = 'secret-key'
 USERS_FILE = 'users.json'
 
 def load_users():
+    if not os.path.exists(USERS_FILE):
+        return {}
     with open(USERS_FILE, 'r') as f:
         return json.load(f)
+
+def save_users(users):
+    with open(USERS_FILE, 'w') as f:
+        json.dump(users, f, indent=2)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -24,19 +32,12 @@ def login():
     username = request.form.get('username')
     password = request.form.get('password')
     users = load_users()
-	
-	if username in users and check_password_hash(users[username]['password'], password):
-		session['username'] = username
-		return redirect('/2fa')
-		
-		return render_template('login.html', error='Invalid username or password')
+    
+    if username in users and check_password_hash(users[username]['password'], password):
+        session['username'] = username
+        return redirect('/2fa')
 
-import pyotp
-import qrcode
-
-def save_users(users):
-    with open(USERS_FILE, 'w') as f:
-        json.dump(users, f, indent=2)
+    return render_template('login.html', error='Invalid username or password')
 
 @app.route('/2fa', methods=['GET'])
 def two_fa():
@@ -47,7 +48,7 @@ def two_fa():
     users = load_users()
     user = users.get(username)
 
-    if not user['totp_secret']:
+    if not user.get('totp_secret'):
         secret = pyotp.random_base32()
         user['totp_secret'] = secret
         save_users(users)
@@ -89,11 +90,11 @@ def register():
     if username in users:
         return render_template('register.html', error="Username already exists.")
 
-   	 hashed_password = generate_password_hash(password)
-	users[username] = {
- 	   "password": hashed_password,
-  	  "totp_secret": None
-	}
+    hashed_password = generate_password_hash(password)
+    users[username] = {
+        "password": hashed_password,
+        "totp_secret": None
+    }
 
     save_users(users)
     return render_template('register.html', success="Account created successfully. You can now log in.")
@@ -101,4 +102,3 @@ def register():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
-
