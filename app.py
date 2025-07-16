@@ -24,10 +24,10 @@ def login():
     username = request.form.get('username')
     password = request.form.get('password')
     users = load_users()
-
+	
 	if username in users and check_password_hash(users[username]['password'], password):
-        session['username'] = username
-        return redirect('/2fa')
+		session['username'] = username
+		return redirect('/2fa')
 
     return render_template('login.html', error='Invalid username or password')
 
