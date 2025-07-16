@@ -1,4 +1,4 @@
 Flask
 pyotp
 qrcode
-
+pillow
