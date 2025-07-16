@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2FA Verification</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="container">
+    <form method="POST" action="/verify-2fa">
+      <h2>Two-Factor Authentication</h2>
+
+      {% if show_qr %}
+        <p>Scan the QR code below with Authentication app:</p>
+        <img src="{{ url_for('static', filename='qrcode.png') }}" alt="QR Code">
+      {% endif %}
+
+      <input type="text" name="token" placeholder="Enter 2FA Code" required>
+      <button type="submit">Verify</button>
+
+      {% if error %}
+        <p class="error">{{ error }}</p>
+      {% endif %}
+    </form>
+  </div>
+</body>
+</html>
